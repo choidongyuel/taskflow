@@ -32,10 +32,14 @@ def init_db():
         CREATE TABLE IF NOT EXISTS tasks (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT NOT NULL,
-            status TEXT NOT NULL DEFAULT 'todo'
+            status TEXT NOT NULL DEFAULT 'todo',
+            due_date TEXT
         )
         """
     )
+    existing_columns = {row["name"] for row in conn.execute("PRAGMA table_info(tasks)")}
+    if "due_date" not in existing_columns:
+        conn.execute("ALTER TABLE tasks ADD COLUMN due_date TEXT")
     conn.commit()
     conn.close()
 
@@ -45,6 +49,7 @@ init_db()
 
 class TaskCreate(BaseModel):
     title: str
+    due_date: Optional[str] = None
 
 
 class TaskStatusUpdate(BaseModel):
@@ -68,7 +73,8 @@ def create_task(task: TaskCreate):
         raise HTTPException(status_code=400, detail="제목을 입력해주세요.")
     conn = get_db_connection()
     cursor = conn.execute(
-        "INSERT INTO tasks (title, status) VALUES (?, 'todo')", (task.title,)
+        "INSERT INTO tasks (title, status, due_date) VALUES (?, 'todo', ?)",
+        (task.title, task.due_date),
     )
     conn.commit()
     new_task = conn.execute(

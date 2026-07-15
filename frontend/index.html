@@ -6,26 +6,59 @@
   <title>업무관리 앱</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 min-h-screen">
-  <div class="max-w-2xl mx-auto py-10 px-4">
-    <h1 class="text-2xl font-bold text-gray-800 mb-6">업무관리</h1>
+<body class="bg-slate-50 min-h-screen">
+  <div class="max-w-3xl mx-auto py-10 px-4">
+    <header class="mb-8">
+      <h1 class="text-2xl font-bold text-slate-800">업무관리</h1>
+      <p class="text-sm text-slate-500 mt-1">진행 상황을 한눈에 확인하고 업무를 관리하세요</p>
+    </header>
 
-    <form id="taskForm" class="flex gap-2 mb-8">
+    <section class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 mb-6">
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-sm font-medium text-slate-600">전체 진행도</span>
+        <span id="progressLabel" class="text-sm font-semibold text-indigo-600">0%</span>
+      </div>
+      <div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+        <div id="progressBar" class="h-full bg-indigo-500 rounded-full transition-all duration-300" style="width: 0%"></div>
+      </div>
+      <div class="grid grid-cols-3 gap-3 mt-5">
+        <div class="rounded-lg bg-slate-50 px-3 py-2 text-center">
+          <div id="countTodo" class="text-lg font-semibold text-slate-700">0</div>
+          <div class="text-xs text-slate-500 mt-0.5">대기</div>
+        </div>
+        <div class="rounded-lg bg-amber-50 px-3 py-2 text-center">
+          <div id="countInProgress" class="text-lg font-semibold text-amber-600">0</div>
+          <div class="text-xs text-amber-500 mt-0.5">진행중</div>
+        </div>
+        <div class="rounded-lg bg-emerald-50 px-3 py-2 text-center">
+          <div id="countDone" class="text-lg font-semibold text-emerald-600">0</div>
+          <div class="text-xs text-emerald-500 mt-0.5">완료</div>
+        </div>
+      </div>
+    </section>
+
+    <form id="taskForm" class="bg-white rounded-xl shadow-sm border border-slate-100 p-4 mb-6 flex flex-col sm:flex-row gap-2">
       <input
         id="taskTitleInput"
         type="text"
         placeholder="새 업무를 입력하세요"
-        class="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+        class="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+      />
+      <input
+        id="taskDueDateInput"
+        type="date"
+        class="border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-400"
       />
       <button
         type="submit"
-        class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+        class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
       >
         추가
       </button>
     </form>
 
     <div id="taskList" class="space-y-3"></div>
+    <p id="emptyState" class="hidden text-center text-slate-400 text-sm py-10">등록된 업무가 없습니다</p>
   </div>
 
   <script src="app.js"></script>
