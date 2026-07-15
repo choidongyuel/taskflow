@@ -12,9 +12,23 @@ const statusBadgeClasses = {
   done: "bg-emerald-100 text-emerald-700",
 };
 
+const priorityLabels = {
+  high: "높음",
+  medium: "보통",
+  low: "낮음",
+};
+
+const priorityBadgeClasses = {
+  high: "bg-red-100 text-red-600",
+  medium: "bg-blue-100 text-blue-600",
+  low: "bg-slate-100 text-slate-500",
+};
+
 const taskForm = document.getElementById("taskForm");
 const taskTitleInput = document.getElementById("taskTitleInput");
 const taskDueDateInput = document.getElementById("taskDueDateInput");
+const taskPriorityInput = document.getElementById("taskPriorityInput");
+const sortSelect = document.getElementById("sortSelect");
 const taskList = document.getElementById("taskList");
 const emptyState = document.getElementById("emptyState");
 const progressBar = document.getElementById("progressBar");
@@ -28,7 +42,7 @@ function todayString() {
 }
 
 async function fetchTasks() {
-  const response = await fetch(apiBaseUrl);
+  const response = await fetch(`${apiBaseUrl}?sort=${sortSelect.value}`);
   const tasks = await response.json();
   renderProgress(tasks);
   renderTasks(tasks);
@@ -78,6 +92,13 @@ function renderTasks(tasks) {
     badge.className = `px-2 py-0.5 rounded-full font-medium ${statusBadgeClasses[task.status]}`;
     metaRow.appendChild(badge);
 
+    const priorityBadge = document.createElement("span");
+    priorityBadge.textContent = priorityLabels[task.priority] || priorityLabels.medium;
+    priorityBadge.className = `px-2 py-0.5 rounded-full font-medium ${
+      priorityBadgeClasses[task.priority] || priorityBadgeClasses.medium
+    }`;
+    metaRow.appendChild(priorityBadge);
+
     if (task.due_date) {
       const dueSpan = document.createElement("span");
       dueSpan.textContent = `마감 ${task.due_date}${isOverdue ? " (지연)" : ""}`;
@@ -122,11 +143,11 @@ function renderTasks(tasks) {
   });
 }
 
-async function addTask(title, dueDate) {
+async function addTask(title, dueDate, priority) {
   await fetch(apiBaseUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title, due_date: dueDate || null }),
+    body: JSON.stringify({ title, due_date: dueDate || null, priority }),
   });
   await fetchTasks();
 }
@@ -149,9 +170,12 @@ taskForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const title = taskTitleInput.value.trim();
   if (!title) return;
-  addTask(title, taskDueDateInput.value);
+  addTask(title, taskDueDateInput.value, taskPriorityInput.value);
   taskTitleInput.value = "";
   taskDueDateInput.value = "";
+  taskPriorityInput.value = "medium";
 });
+
+sortSelect.addEventListener("change", fetchTasks);
 
 fetchTasks();

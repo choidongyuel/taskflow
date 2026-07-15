@@ -33,13 +33,16 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT NOT NULL,
             status TEXT NOT NULL DEFAULT 'todo',
-            due_date TEXT
+            due_date TEXT,
+            priority TEXT NOT NULL DEFAULT 'medium'
         )
         """
     )
     existing_columns = {row["name"] for row in conn.execute("PRAGMA table_info(tasks)")}
     if "due_date" not in existing_columns:
         conn.execute("ALTER TABLE tasks ADD COLUMN due_date TEXT")
+    if "priority" not in existing_columns:
+        conn.execute("ALTER TABLE tasks ADD COLUMN priority TEXT NOT NULL DEFAULT 'medium'")
     conn.commit()
     conn.close()
 
@@ -50,6 +53,7 @@ init_db()
 class TaskCreate(BaseModel):
     title: str
     due_date: Optional[str] = None
+    priority: str = "medium"
 
 
 class TaskStatusUpdate(BaseModel):
@@ -57,24 +61,31 @@ class TaskStatusUpdate(BaseModel):
 
 
 VALID_STATUSES = {"todo", "in_progress", "done"}
+VALID_PRIORITIES = {"high", "medium", "low"}
+PRIORITY_ORDER = {"high": 0, "medium": 1, "low": 2}
 
 
 @app.get("/api/tasks")
-def get_tasks():
+def get_tasks(sort: str = "created"):
     conn = get_db_connection()
     rows = conn.execute("SELECT * FROM tasks ORDER BY id DESC").fetchall()
     conn.close()
-    return [dict(row) for row in rows]
+    tasks = [dict(row) for row in rows]
+    if sort == "priority":
+        tasks.sort(key=lambda t: PRIORITY_ORDER.get(t["priority"], 1))
+    return tasks
 
 
 @app.post("/api/tasks")
 def create_task(task: TaskCreate):
     if not task.title.strip():
         raise HTTPException(status_code=400, detail="제목을 입력해주세요.")
+    if task.priority not in VALID_PRIORITIES:
+        raise HTTPException(status_code=400, detail="유효하지 않은 우선순위입니다.")
     conn = get_db_connection()
     cursor = conn.execute(
-        "INSERT INTO tasks (title, status, due_date) VALUES (?, 'todo', ?)",
-        (task.title, task.due_date),
+        "INSERT INTO tasks (title, status, due_date, priority) VALUES (?, 'todo', ?, ?)",
+        (task.title, task.due_date, task.priority),
     )
     conn.commit()
     new_task = conn.execute(
